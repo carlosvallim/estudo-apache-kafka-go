@@ -29,21 +29,23 @@ func main() {
 	// Optional delivery channel, if not specified the Producer object's
 	// .Events channel is used.
 	deliveryChan := make(chan kafka.Event)
-	value := "Hello Go!"
-	err = p.Produce(&kafka.Message{
-		TopicPartition: kafka.TopicPartition{Topic: &topic, Partition: kafka.PartitionAny},
-		Value:          []byte(value),
-		Headers:        []kafka.Header{{key: "myTestHeader", value: []byte("header values are binary")}},
-	}, deliveryChan)
+	for i := 0; i < 100; i++ {
+		value := fmt.Sprintf("Hello Go! %v", i)
+		err = p.Produce(&kafka.Message{
+			TopicPartition: kafka.TopicPartition{Topic: &topic, Partition: kafka.PartitionAny},
+			Value:          []byte(value),
+			Headers:        []kafka.Header{{Key: "myTestHeader", Value: []byte("header values are binary")}},
+		}, deliveryChan)
 
-	e := <-deliveryChan
-	m := e.(*kafka.Message)
+		e := <-deliveryChan
+		m := e.(*kafka.Message)
 
-	if m.TopicPartition.Error != nil {
-		fmt.Printf("Delivery failed: %v\n", m.TopicPartition.Error)
-	} else {
-		fmt.Printf("Delivered message to topic %s [%d] at offset %v\n",
-			*m.TopicPartition.Topic, m.TopicPartition.Partition, m.TopicPartition.Offset)
+		if m.TopicPartition.Error != nil {
+			fmt.Printf("Delivery failed: %v\n", m.TopicPartition.Error)
+		} else {
+			fmt.Printf("Delivered message to topic %s [%d] at offset %v\n",
+				*m.TopicPartition.Topic, m.TopicPartition.Partition, m.TopicPartition.Offset)
+		}
 	}
 
 	close(deliveryChan)
